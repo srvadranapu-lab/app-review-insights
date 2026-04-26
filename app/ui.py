@@ -15,6 +15,10 @@ st.set_page_config(page_title="App Review Insights Analyser", page_icon="📊")
 
 st.title("App Review Insights Analyser")
 
+# ✅ SESSION STATE FIX
+if "render_success" not in st.session_state:
+    st.session_state.render_success = False
+
 st.header("Pipeline Steps")
 
 # Ingestion
@@ -54,12 +58,13 @@ if st.button("Generate Insights"):
             st.success(f"Found {len(result.get('quotes', []))} valid quotes")
             st.success(f"Created {len(result.get('actions', []))} action ideas")
 
-# Generate Report
+# ✅ FIXED Generate Report
 if st.button("Generate Report"):
     with st.spinner("Loading summary..."):
         summary = load_summary()
         if not summary:
             st.error("No summary found. Run 'Generate Insights' first.")
+            st.session_state.render_success = False
         else:
             st.success("Summary loaded")
     
@@ -73,6 +78,8 @@ if st.button("Generate Report"):
             subject, body = generate_email(summary, "Groww")
             save_email(subject, body)
             st.success("Email saved to data/email.html")
+        
+        st.session_state.render_success = True
 
 # Publish to Google Docs
 if st.button("Publish to Google Docs"):
@@ -85,32 +92,33 @@ if st.button("Publish to Google Docs"):
 
 # Send Email
 if st.button("Send Email"):
-    with st.spinner("Sending email..."):
-        success = publish_email()
-        if success:
-            st.success("Email sent successfully!")
+    with st.spinner("Generating Gmail compose link..."):
+        gmail_url = publish_email()
+        if gmail_url:
+            st.success("Gmail compose link generated!")
+            st.markdown(f"[Open Gmail Compose]({gmail_url})")
         else:
-            st.error("Failed to send email")
+            st.error("Failed to generate Gmail compose link")
 
 st.header("Outputs")
 
-# Display Report
+# ✅ FIXED Report Display
 st.subheader("Report")
-if os.path.exists("data/report.txt"):
+if st.session_state.render_success and os.path.exists("data/report.txt"):
     with open("data/report.txt", 'r', encoding='utf-8') as f:
         st.text(f.read())
 else:
     st.info("Report not generated yet")
 
-# Display Email Preview
+# Email Preview
 st.subheader("Email Preview")
-if os.path.exists("data/email.html"):
+if st.session_state.render_success and os.path.exists("data/email.html"):
     with open("data/email.html", 'r', encoding='utf-8') as f:
         st.markdown(f.read())
 else:
     st.info("Email not generated yet")
 
-# Display Google Doc Link
+# Google Doc Link
 st.subheader("Google Doc Link")
 if os.path.exists("data/doc_link.txt"):
     with open("data/doc_link.txt", 'r', encoding='utf-8') as f:
