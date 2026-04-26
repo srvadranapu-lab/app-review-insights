@@ -1,3 +1,6 @@
+import os
+from app.mcp_docs import append_to_doc, generate_doc_link
+
 def publish_to_docs():
     """Publish report to Google Docs via MCP."""
     report_file = "data/report.txt"
