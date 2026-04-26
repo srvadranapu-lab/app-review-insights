@@ -4,3 +4,4 @@ pydantic
 python-dotenv
 requests
 google-play-scraper
+streamlit==1.32.0
